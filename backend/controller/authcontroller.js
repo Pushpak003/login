@@ -89,7 +89,7 @@ const login = async (req, res) => {
       );
 
       const resetLink =
-        `http://127.0.0.1:5500/reset.html?token=${resetToken}`;
+        `http://localhost:5173/reset-password?token=${resetToken}`;
 
       try {
 
