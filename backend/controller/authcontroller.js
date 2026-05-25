@@ -66,11 +66,36 @@ const login = async (req, res) => {
 
     if (validUser.is_blocked) {
 
+      const resetToken =
+        crypto.randomBytes(32).toString("hex");
+
+      const expiry = new Date(
+        Date.now() + 15 * 60 * 1000
+      );
+
+      await pool.query(
+        `
+        UPDATE users
+        SET
+          reset_token = $1,
+          reset_token_expiry = $2
+        WHERE id = $3
+        `,
+        [
+          resetToken,
+          expiry,
+          validUser.id
+        ]
+      );
+
+      const resetLink =
+        `http://127.0.0.1:5500/reset.html?token=${resetToken}`;
+
       try {
 
         await sendBlockMail(
           validUser.email,
-          `http://127.0.0.1:5500/reset.html?token=${validUser.reset_token}`
+          resetLink
         );
 
       } catch (mailError) {
@@ -80,7 +105,8 @@ const login = async (req, res) => {
       }
 
       return res.status(403).json({
-        message: "Account blocked. Reset mail sent again."
+        message:
+          "Account blocked. Reset mail sent again."
       });
     }
 
@@ -150,7 +176,8 @@ const login = async (req, res) => {
         }
 
         return res.status(403).json({
-          message: "Account blocked. Reset mail sent."
+          message:
+            "Account blocked. Reset mail sent."
         });
       }
 
